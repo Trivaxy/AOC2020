@@ -3,7 +3,7 @@ use std::io::{BufReader, BufRead, Read};
 use std::str::FromStr;
 
 fn main() {
-    println!("{}", day_3(&input, 3, 1));
+    // call any of the day_x functions
 }
 
 ///
@@ -116,7 +116,7 @@ fn day_3(input: &str, xspeed: usize, yspeed: usize) -> i32 {
         y += yspeed;
 
         if x >= map[y].len() {
-            x = x - map[y].len();
+            x -= map[y].len();
         }
 
         if map[y][x] == '#' {
