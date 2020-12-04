@@ -1,5 +1,4 @@
-use std::fs::File;
-use std::io::{BufReader, BufRead, Read};
+use std::fs;
 use std::str::FromStr;
 
 fn main() {
@@ -127,3 +126,89 @@ fn day_3(input: &str, xspeed: usize, yspeed: usize) -> i32 {
     trees
 }
 
+///
+/// DAY 4
+///
+
+fn day_4(input: &str, second_part: bool) -> i32 {
+    let raw_passports = input.split("\n\r")
+        .map(|s| s.trim().to_owned())
+        .map(|s| s.replace("\r\n", " "))
+        .collect::<Vec<String>>();
+
+    let mut passports = raw_passports.iter()
+        .map(|p| p.split(|c| c == ' ' || c == ':').collect::<Vec<&str>>())
+        .collect::<Vec<Vec<&str>>>();
+
+    let required_keys = [
+        "byr", "iyr", "eyr", "hgt",
+        "hcl", "ecl", "pid"
+    ];
+
+    passports.retain(|entry| {
+        for key in &required_keys {
+            if !entry.contains(key) {
+                return false;
+            }
+        }
+        true
+    });
+
+    if !second_part {
+        return passports.len() as i32;
+    }
+
+    passports.retain(|entry| {
+        let mut valid_key = false;
+
+        for i in (0..entry.len()).step_by(2) {
+            let key = entry[i];
+            let value = entry[i + 1];
+
+            valid_key = match key {
+                "byr" => match i32::from_str(value) {
+                    Ok(n) => n >= 1920 && n <= 2002,
+                    Err(_) => false
+                },
+                "iyr" => match i32::from_str(value) {
+                    Ok(n) => n >= 2010 && n <= 2020,
+                    Err(_) => false
+                },
+                "eyr" => match i32::from_str(value) {
+                    Ok(n) => n >= 2020 && n <= 2030,
+                    Err(_) => false,
+                },
+                "hgt" => {
+                    let n = match i32::from_str(&value[..value.len() - 2]) {
+                        Ok(n) => n,
+                        Err(_) => return false,
+                    };
+
+                    if value.ends_with("cm") {
+                        n >= 150 && n <= 193
+                    } else {
+                        n >= 59 && n <= 76
+                    }
+                },
+                "hcl" => value.len() == 7
+                    && value.starts_with("#")
+                    && value.chars().skip(1).all(|c| c.is_numeric() || (c >= 'a' && c <= 'f')),
+                "ecl" => match value {
+                    "amb" | "blu" | "brn" | "gry" | "grn" | "hzl" | "oth" => true,
+                    _ => false,
+                },
+                "pid" => value.len() == 9 && i32::from_str(value).is_ok(),
+                "cid" => true,
+                _ => unreachable!()
+            };
+
+            if !valid_key {
+                return false;
+            }
+        }
+
+        true
+    });
+
+    passports.len() as i32
+}
