@@ -1,8 +1,10 @@
 use std::fs;
 use std::str::FromStr;
+use std::collections::HashMap;
 
 fn main() {
-    // call any of the day_x functions
+    let input = fs::read_to_string("input_day6.txt").unwrap();
+    println!("{}", day_6(&input, true));
 }
 
 ///
@@ -211,4 +213,104 @@ fn day_4(input: &str, second_part: bool) -> i32 {
     });
 
     passports.len() as i32
+}
+
+///
+/// DAY 5
+///
+
+fn day_5(input: &str, second_part: bool) -> i32 {
+    let passes = input.split('\n')
+        .map(|l| l.trim().chars().collect::<Vec<char>>())
+        .collect::<Vec<Vec<char>>>();
+
+    let mut highest_id = 0;
+    let mut seat_ids = Vec::new();
+
+    for pass in &passes {
+        let (mut min_row, mut max_row) = (0, 128);
+        let (mut min_col, mut max_col) = (0, 8);
+
+        for char in pass {
+            match char {
+                'F' => max_row = (max_row + min_row) / 2,
+                'B' => min_row = (max_row + min_row) / 2,
+                'R' => min_col = (max_col + min_col) / 2,
+                'L' => max_col = (max_col + min_col) / 2,
+                _ => unreachable!()
+            }
+        }
+
+        let id = (max_row - 1) * 8 + (max_col - 1);
+        seat_ids.push(id);
+
+        if id > highest_id {
+            highest_id = id;
+        }
+    }
+
+    if !second_part {
+        return highest_id;
+    }
+
+    let mut correct_id = 0;
+    seat_ids.sort();
+
+    for i in 1..seat_ids.len() {
+        if seat_ids[i] - seat_ids[i - 1] != 1 {
+            correct_id = (seat_ids[i] + seat_ids[i - 1]) / 2;
+        }
+    }
+
+    correct_id
+}
+
+///
+/// DAY 6
+///
+
+fn day_6(input: &str, second_part: bool) -> i32 {
+    let groups = input.split("\r\n\r\n")
+        .map(|g| g.trim()
+            .split("\r\n")
+            .map(|s| s.chars().collect::<Vec<char>>())
+            .collect::<Vec<Vec<char>>>())
+        .collect::<Vec<Vec<Vec<char>>>>();
+
+    let mut count = 0;
+
+    for group in &groups {
+        let mut answered_questions = HashMap::new();
+
+        for person in group {
+            if !second_part {
+                for answer in person {
+                    answered_questions.insert(answer, true);
+                }
+            } else {
+                for other_person in group {
+                    for answer in person {
+                        if !answered_questions.contains_key(answer) || answered_questions[answer] == true {
+                            if other_person.contains(answer) {
+                                answered_questions.insert(answer, true);
+                            } else {
+                                answered_questions.insert(answer, false);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        if !second_part {
+            count += answered_questions.len() as i32;
+        } else {
+            count += answered_questions.iter()
+                .filter(|&(k, v)| *v == true)
+                .collect::<HashMap<&&char, &bool>>()
+                .len() as i32;
+        }
+    }
+
+    count
 }
